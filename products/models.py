@@ -1,5 +1,6 @@
 from django.db import models
-from CommerceCore_project.accounts.models import User
+from accounts.models import User
+from django.template.defaultfilters import slugify
 
 # Create your models here.
 
@@ -50,3 +51,7 @@ class ProductModel(models.Model):
     class Meta:
         verbose_name='محصول'
         verbose_name_plural = 'محصولات'
+
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.name)
+        super().save(*args, **kwargs)  # بدون این مدل هرگز ذخیره نمی‌شود
