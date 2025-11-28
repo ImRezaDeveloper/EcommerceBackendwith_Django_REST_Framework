@@ -1,6 +1,7 @@
 from django.db import models
 from accounts.models import User
 from django.template.defaultfilters import slugify
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 # Create your models here.
 
@@ -55,3 +56,20 @@ class ProductModel(models.Model):
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
         super().save(*args, **kwargs)  # بدون این مدل هرگز ذخیره نمی‌شود
+
+
+class CommentProduct(models.Model):
+    product = models.ForeignKey(ProductModel, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
+    body = models.TextField(max_length=500)
+    rating = models.PositiveSmallIntegerField(default=5, validators=[MinValueValidator(1), MaxValueValidator(5)])  # 1 - 5
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)  # برای مدیریت و مخفی کردن نظر
+
+    def __str__(self):
+        return f"{self.user} on {self.product} ({self.rating}/5)"
+
+    class Meta:
+        verbose_name = 'کامنت'
+        verbose_name_plural = 'کامنت ها'
