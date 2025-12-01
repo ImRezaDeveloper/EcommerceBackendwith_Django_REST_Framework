@@ -1,10 +1,14 @@
 from django.http import Http404
-
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from products.api.v1.serializer import ProductSerializer, CommentProductSerializer, CategoriesSerializer
 from products.models import ProductModel, CommentProduct, CategoryModel
 from rest_framework.response import Response
 from rest_framework import generics, mixins
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters
+from .pagination import ProductPagination
+from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
+from .throttling import CustomAnonRateThrottle
 
 
 class ProductsList(generics.ListAPIView):
@@ -14,13 +18,28 @@ class ProductsList(generics.ListAPIView):
     """
     queryset = ProductModel.objects.all()
     serializer_class = ProductSerializer
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['in_stock']
+    search_fields = ["name"]
+    # ordering
+    ordering_fields = ["price"]
+    # pagination
+    pagination_class = ProductPagination
+    # throttling
+    throttle_classes = [UserRateThrottle, CustomAnonRateThrottle]
+
+    def get(self, request, format=None):
+        content = {
+            'status': 'request was permitted'
+        }
+        return Response(content)
+
 
 class ProductDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.ListAPIView):
 
     queryset = ProductModel.objects.all()
     serializer_class = ProductSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get(self, request, *args, **kwargs):
         """
