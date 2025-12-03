@@ -84,7 +84,16 @@ class ProductDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.D
 
 
 class CommentProductList(generics.ListAPIView):
+    """
+    Returns all comments related to a specific product.
 
+    Parameters:
+        pk (int): The ID of the product whose comments you want to retrieve.
+
+    Responses:
+        200 OK: Successfully returned the list of comments.
+        400 Bad Request: Invalid product ID or request parameters.
+    """
     def get_queryset(self):
         product_id = self.kwargs.get('id')
         return CommentProduct.objects.filter(product_id=product_id)
@@ -99,25 +108,50 @@ class CommentProductList(generics.ListAPIView):
 
 
 class CommentCreateProducts(generics.ListCreateAPIView):
-    serializer_class = CommentProductSerializer
-    permission_classes = [IsAuthenticated]
+        """
+            Create comment that related to a specific product.
 
-    def get_queryset(self):
-        product_id = self.kwargs.get('id')
-        return CommentProduct.objects.filter(product_id=product_id)
+            Parameters:
+                pk (int): The ID of the product that comment should be save for that.
 
-    def perform_create(self, serializer):
-        product_id = self.kwargs.get('id')
-        user = self.request.user
+            Responses:
+                201 OK: Successfully created the comment.
+                400 Bad Request: Invalid product ID or request parameters.
+        """
 
-        if CommentProduct.objects.filter(user=user, product=product_id).exists():
-            raise ValidationError({"detail": "you've already leaved comment for this product"})
+        serializer_class = CommentProductSerializer
+        permission_classes = [IsAuthenticated]
 
-        serializer.save(user=user, product_id=product_id)
+        def get_queryset(self):
+            product_id = self.kwargs.get('id')
+            return CommentProduct.objects.filter(product_id=product_id)
+
+        def perform_create(self, serializer):
+            """
+            this method create comment for each product
+            :param
+                pk: id of the each product
+            Responses:
+                201 OK: Successfully created the comment.
+                400 Bad Request: Invalid product ID or request parameters.
+            """
+            product_id = self.kwargs.get('id')
+            user = self.request.user
+
+            if CommentProduct.objects.filter(user=user, product=product_id).exists():
+                raise ValidationError({"detail": "you've already leaved comment for this product"})
+
+            serializer.save(user=user, product_id=product_id)
 
 
 class CategoriesList(generics.ListAPIView):
+    """
+        Returns all CategoryList.
 
+        Responses:
+            200 OK: Successfully returned the list of category.
+            400 Bad Request: Invalid category ID or request parameters.
+        """
     def get_queryset(self):
         category_name = self.kwargs.get('category')
         return ProductModel.objects.filter(categories__name=category_name)
