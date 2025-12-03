@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from products.models import ProductModel, CommentProduct, CategoryModel
+from products.models import ProductModel, CommentProduct
 
 
 class ProductSerializer(serializers.ModelSerializer):

@@ -1,5 +1,7 @@
 from django.http import Http404
+from rest_framework.exceptions import JsonResponse, ValidationError
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from accounts.models import User
 from products.api.v1.serializer import ProductSerializer, CommentProductSerializer, CategoriesSerializer
 from products.models import ProductModel, CommentProduct, CategoryModel
 from rest_framework.response import Response
@@ -94,6 +96,24 @@ class CommentProductList(generics.ListAPIView):
         return super().list(request, *args, **kwargs)
 
     serializer_class = CommentProductSerializer
+
+
+class CommentCreateProducts(generics.ListCreateAPIView):
+    serializer_class = CommentProductSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        product_id = self.kwargs.get('id')
+        return CommentProduct.objects.filter(product_id=product_id)
+
+    def perform_create(self, serializer):
+        product_id = self.kwargs.get('id')
+        user = self.request.user
+
+        if CommentProduct.objects.filter(user=user, product=product_id).exists():
+            raise ValidationError({"detail": "you've already leaved comment for this product"})
+
+        serializer.save(user=user, product_id=product_id)
 
 
 class CategoriesList(generics.ListAPIView):
