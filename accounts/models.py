@@ -12,6 +12,7 @@ class User(AbstractBaseUser):
         blank=True
     )
     phone = models.CharField(max_length=12, unique=True, verbose_name='شماره تماس')
+    full_name = models.CharField(max_length=255, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
 
