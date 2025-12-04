@@ -29,19 +29,19 @@ class ProductsList(generics.ListAPIView):
     pagination_class = ProductPagination
     # throttling
     throttle_classes = [UserRateThrottle, CustomAnonRateThrottle]
+    permission_classes = [IsAuthenticated]
 
-    def get(self, request, format=None):
-        content = {
-            'status': 'request was permitted'
-        }
-        return Response(content)
+    def get(self, request):
+        products = ProductModel.objects.all()
+        serializer = ProductSerializer(products, many=True)
+        return Response({"data": serializer.data})
 
 
 class ProductDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.ListAPIView):
 
     queryset = ProductModel.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         """
@@ -84,6 +84,7 @@ class ProductDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.D
 
 
 class CommentProductList(generics.ListAPIView):
+    # permission_classes = [IsAuthenticated]
     """
     Returns all comments related to a specific product.
 
@@ -138,7 +139,7 @@ class CommentCreateProducts(generics.ListCreateAPIView):
             product_id = self.kwargs.get('id')
             user = self.request.user
 
-            if CommentProduct.objects.filter(user=user, product=product_id).exists():
+            if CommentProduct.objects.filter(user=user, product_id=product_id).exists():
                 raise ValidationError({"detail": "you've already leaved comment for this product"})
 
             serializer.save(user=user, product_id=product_id)
