@@ -3,9 +3,10 @@ from rest_framework_simplejwt.views import (TokenObtainPairView, TokenRefreshVie
 from . import views
 
 urlpatterns = [
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # login via jwt
+    path('api/v1/accounts/login', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/v1/accounts/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
-    # register
-    path('api/v1/accounts/register', views.UserRegisterView.as_view(), name='register')
+    # register => after register get jwt code
+    path('api/v1/accounts/register', views.UserRegisterView.as_view(), name='register'),
 ]
