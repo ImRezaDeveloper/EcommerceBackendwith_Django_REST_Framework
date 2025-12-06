@@ -9,4 +9,8 @@ urlpatterns = [
 
     # register => after register get jwt code
     path('api/v1/accounts/register', views.UserRegisterView.as_view(), name='register'),
+
+    # user info
+    path('api/v1/users/', views.ListUserInfo.as_view(), name='users_info'),
+    path('api/v1/users/<str:pk>/', views.UserInfoById.as_view(), name='user_by_id')
 ]
