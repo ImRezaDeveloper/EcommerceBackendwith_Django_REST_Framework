@@ -31,12 +31,8 @@ class ListUserInfo(generics.ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    def get(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
-
 
 class UserInfoById(generics.RetrieveAPIView, generics.UpdateAPIView, generics.DestroyAPIView):
-
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
@@ -45,7 +41,7 @@ class UserInfoById(generics.RetrieveAPIView, generics.UpdateAPIView, generics.De
         return super().retrieve(request, *args, **kwargs)
 
     def put(self, request, *args, **kwargs):
-        return super().update(self, request, *args, **kwargs)
+        return super().update(request, *args, **kwargs)
 
     def delete(self, request, *args, **kwargs):
-        return super().destroy(self, request, *args, **kwargs)
+        return super().destroy(request, *args, **kwargs)
