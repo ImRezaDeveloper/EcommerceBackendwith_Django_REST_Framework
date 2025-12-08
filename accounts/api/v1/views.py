@@ -7,6 +7,8 @@ from .serializer import UserRegisterSerializer, UserSerializer
 from rest_framework import generics
 from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 
+from ...permissions import IsOwner
+
 
 class UserRegisterView(APIView):
     """
@@ -38,21 +40,21 @@ class ListUserInfo(generics.ListCreateAPIView):
 class UserInfoById(generics.RetrieveAPIView, generics.UpdateAPIView, generics.DestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOwner]
 
     def get(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
     def put(self, request,*args, **kwargs):
-        if not self.check_user():
-            return Response({"detail": "You cannot change other users"}, status=403)
+        # if not self.check_user():
+        #     return Response({"detail": "You cannot change other users"}, status=403)
         return super().update(request, *args, **kwargs)
 
     def delete(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
-    def check_user(self):
-        pk = self.kwargs.get('pk')
-        user = get_object_or_404(User, id=pk)
-        return user == self.request.user
-    
+    # check user for permission
+    # def check_user(self):
+    #     pk = self.kwargs.get('pk')
+    #     user = get_object_or_404(User, id=pk)
+    #     return user == self.request.user
