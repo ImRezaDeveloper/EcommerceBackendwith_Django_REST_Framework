@@ -40,12 +40,19 @@ class UserInfoById(generics.RetrieveAPIView, generics.UpdateAPIView, generics.De
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
 
-
     def get(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
-    def put(self, request, *args, **kwargs):
+    def put(self, request,*args, **kwargs):
+        if not self.check_user():
+            return Response({"detail": "You cannot change other users"}, status=403)
         return super().update(request, *args, **kwargs)
 
     def delete(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+    def check_user(self):
+        pk = self.kwargs.get('pk')
+        user = get_object_or_404(User, id=pk)
+        return user == self.request.user
+    
