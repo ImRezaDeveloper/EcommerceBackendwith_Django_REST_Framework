@@ -1,10 +1,11 @@
 from django.shortcuts import get_object_or_404
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from accounts.models import User
 from .serializer import UserRegisterSerializer, UserSerializer
 from rest_framework import generics
+from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 
 
 class UserRegisterView(APIView):
@@ -30,12 +31,15 @@ class UserRegisterView(APIView):
 class ListUserInfo(generics.ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [IsAdminUser]
+    throttle_classes = [UserRateThrottle, AnonRateThrottle]
 
 
 class UserInfoById(generics.RetrieveAPIView, generics.UpdateAPIView, generics.DestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
+
 
     def get(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)

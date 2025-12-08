@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser
+from django.urls import reverse
+
 from .managers import UserManager
 
 
@@ -22,7 +24,8 @@ class User(AbstractBaseUser):
     # REQUIRED_FIELDS = ["date_of_birth"]
 
     def __str__(self):
-        return str(self.phone)
+        if self.phone:
+            return self.phone
 
     def has_perm(self, perm, obj=None):
         "Does the user have a specific permission?"
