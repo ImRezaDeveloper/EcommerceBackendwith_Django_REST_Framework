@@ -12,5 +12,8 @@ urlpatterns = [
 
     # user info
     path('api/v1/users/', views.ListUserInfo.as_view(), name='users_info'),
-    path('api/v1/users/<str:pk>/', views.UserInfoById.as_view(), name='user_by_id')
+    path('api/v1/users/<str:pk>/', views.UserInfoById.as_view(), name='user_by_id'),
+    
+    # password
+    path("change_password/<int:id>", views.ChangePassword.as_view(), name="change_password")
 ]

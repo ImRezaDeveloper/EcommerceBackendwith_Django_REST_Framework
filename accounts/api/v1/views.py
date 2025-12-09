@@ -3,8 +3,8 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from accounts.models import User
-from .serializer import UserRegisterSerializer, UserSerializer
-from rest_framework import generics
+from .serializer import UserRegisterSerializer, UserSerializer, ChangePasswordSerializer
+from rest_framework import generics, status
 from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 
 from ...permissions import IsOwner
@@ -58,3 +58,26 @@ class UserInfoById(generics.RetrieveAPIView, generics.UpdateAPIView, generics.De
     #     pk = self.kwargs.get('pk')
     #     user = get_object_or_404(User, id=pk)
     #     return user == self.request.user
+
+class ChangePassword(generics.GenericAPIView):
+    
+    serializer_class = ChangePasswordSerializer
+    
+    def get_object(self):
+        user_id = self.kwargs.get('id')
+        return User.objects.get(pk=user_id)
+    
+    def put(self, request):
+
+        serializer = ChangePasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        old_password = request.data["old_password"]
+        new_password = request.data["new_password"]
+
+        user = self.get_object()
+        if not user.check_password(raw_password=old_password):
+            return Response(data={"error": "password does not match"}, status=400)
+        else:
+            user.set_password(new_password)
+            user.save()
+            return Response(data={"success": "password changed successfully!"}, status=200)
