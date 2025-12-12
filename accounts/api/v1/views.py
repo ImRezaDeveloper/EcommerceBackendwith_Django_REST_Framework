@@ -6,6 +6,7 @@ from accounts.models import User
 from .serializer import UserRegisterSerializer, UserSerializer, ChangePasswordSerializer
 from rest_framework import generics, status
 from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from ...permissions import IsOwner
 
@@ -59,6 +60,7 @@ class UserInfoById(generics.RetrieveAPIView, generics.UpdateAPIView, generics.De
     #     user = get_object_or_404(User, id=pk)
     #     return user == self.request.user
 
+
 class ChangePassword(generics.GenericAPIView):
     
     serializer_class = ChangePasswordSerializer
@@ -81,3 +83,28 @@ class ChangePassword(generics.GenericAPIView):
             user.set_password(new_password)
             user.save()
             return Response(data={"success": "password changed successfully!"}, status=200)
+
+
+class LogoutView(APIView):
+    def post(self, request):
+        refresh_token = request.data.get("refresh")
+
+        if not refresh_token:
+            return Response({"detail": "Refresh token missing"}, status=400)
+
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()   # مهم!
+        except Exception:
+            return Response({"detail": "Invalid refresh token"}, status=400)
+
+        return Response({"detail": "Logged out"}, status=205)
+
+
+class UserProfile(APIView):
+    permission_classes = [IsAuthenticated,]
+
+    def get(self, request):
+        user = self.request.user
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
