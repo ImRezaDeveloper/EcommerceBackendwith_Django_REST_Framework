@@ -1,3 +1,4 @@
+from django.db.models import Avg, Count
 from django.http import Http404
 from rest_framework.exceptions import JsonResponse, ValidationError
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
@@ -31,9 +32,16 @@ class ProductsList(generics.ListAPIView):
     throttle_classes = [UserRateThrottle, CustomAnonRateThrottle]
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        return ProductModel.objects.annotate(
+            avg_rating=Avg("comments__rating"),
+            rating_count=Count("comments__rating")
+        )
+
     def get(self, request):
-        products = ProductModel.objects.all()
-        serializer = ProductSerializer(products, many=True)
+        # products = ProductModel.objects.all()
+        ratings = self.get_queryset()
+        serializer = ProductSerializer(ratings, many=True)
         return Response({"data": serializer.data})
 
 
@@ -56,7 +64,9 @@ class ProductDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.D
 
 
         """
-        return super().retrieve(request, *args, **kwargs)
+        ratings = self.get_queryset()
+        serializer = ProductSerializer(ratings, many=True)
+        return Response({"data": serializer.data})
 
     def put(self, request, *args, **kwargs):
         """
@@ -81,6 +91,12 @@ class ProductDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.D
                     - 404
         """
         return super().destroy(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return ProductModel.objects.annotate(
+            avg_rating=Avg("comments__rating"),
+            rating_count=Count("comments__rating")
+        )
 
 
 class CommentProductList(generics.ListAPIView):
