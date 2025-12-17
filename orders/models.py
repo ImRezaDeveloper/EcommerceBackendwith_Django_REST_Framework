@@ -12,12 +12,17 @@ class Order(models.Model):
         ("canceled", "Canceled"),
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
-    status = models.CharField(choices=STATUS_CHOICES, null=True, blank=True, max_length=10, default="pending")
+    status = models.CharField(choices=STATUS_CHOICES, max_length=10, default="pending")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    @property
+    def total_price(self):
+        return sum(item.price * item.quantity for item in self.items.all())
+    
     def __str__(self):
-        return f'{self.user.full_name}'
+        return f"Order #{self.id} - {self.user.phone}"
+
     
 class OrderItems(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
