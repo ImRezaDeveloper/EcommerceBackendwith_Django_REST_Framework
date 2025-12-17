@@ -3,3 +3,4 @@ djangorestframework
 pillow
 django-filter
 djangorestframework-simplejwt
+django-redis
