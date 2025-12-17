@@ -38,6 +38,7 @@ INSTALLED_APPS = [
 
     'products',
     'accounts',
+    'orders',
     'rest_framework',
     'django_filters',
     'rest_framework_simplejwt.token_blacklist'
