@@ -1,34 +1,49 @@
 from django.core.cache import cache
 
 class CartService:
-    def __init__(self, user_id):
-        self.user_id = user_id
-        self.key = f'cart:{user_id}'
-    
-    # add item to cart
-    def add_item(self, product_id, quantity):
-        cart = cache.get(self.key) or {}
-        if str(product_id) in cart:
-            cart[str(product_id)] += quantity
+    def __init__(self, request):
+        self.request = request
+        self.user = request.user if request.user.is_authenticated else None
+
+        # تعیین کلید بر اساس کاربر لاگین‌شده یا جلسه مهمان
+        if self.user:
+            self.key = f"cart_user_{self.user}"
         else:
-            cart[str(product_id)] = quantity
-        
-        cache.set(self.user_id, cart, timeout=86400)
-        
-    # remove item from cart
+            # برای کاربر مهمان: مطمئن شو session وجود داره
+            if not request.session.session_key:
+                request.session.create()
+            self.key = f"cart_session_{request.session.session_key}"
+
+    def get_items(self):
+        cart = cache.get(self.key, {})
+        # کلیدها رو به string تبدیل کن (ایمنی بیشتر)
+        return {str(k): v for k, v in cart.items()}
+
+    def add_item(self, product_id, quantity=1):
+        product_id = str(product_id)
+        cart = cache.get(self.key, {})
+
+        if product_id in cart:
+            cart[product_id]["quantity"] += quantity
+        else:
+            cart[product_id] = {"quantity": quantity}
+
+        cache.set(self.key, cart, timeout=86400 * 30)  # ۳۰ روز
+
     def remove_item(self, product_id, quantity):
         cart = cache.get(self.key) or {}
-        if str(product_id) in cart:
-            cart[str(product_id)] -= quantity
-            if (str(product_id)) <= 0:
-                del cart[str(product_id)]
-        
-        cache.set(self.user_id, cart, timeout=86400)
-        
-    # get all items from cart
+        product_id = str(product_id)
+
+        if product_id in cart:
+            cart[product_id]["quantity"] -= quantity
+
+            if cart[product_id]["quantity"] <= 0:
+                del cart[product_id]
+
+        cache.set(self.key, cart, timeout=86400)
+
     def get_items(self):
         return cache.get(self.key) or {}
-    
-    # delete all items in cart
-    def clear_cart(self):
-        cache.delete(self.key)
+
+    def clear_items(self):
+        return cache.delete(self.key) 
