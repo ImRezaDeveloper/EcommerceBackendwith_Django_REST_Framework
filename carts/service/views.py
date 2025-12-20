@@ -56,3 +56,40 @@ class AddToCart(APIView):
             data.append(item)
 
         return Response({"cart": data})
+    
+class RemoveFromCart(APIView):
+    
+    def post(self, request):
+        product_id = request.data.get("product_id")
+        quantity = request.data.get("quantity")
+        
+        
+        if not product_id:
+            return Response({"error": "product_id is required"}, status=400)
+        
+        try:
+            product = ProductModel.objects.get(id=product_id)
+        except ProductModel.DoesNotExist:
+            return Response({"error": "Product not found"}, status=404)
+        
+        cart_service = CartService(request)
+        cart_service.remove_item(product_id=product_id, quantity=quantity)
+        
+        cart_data = cart_service.get_items()
+        
+        product_ids = [int(item) for item in cart_data.keys()]
+        product = ProductModel.objects.filter(id__in=map(int, product_ids))
+        serializer = ProductSerializer(product, many=True)
+        
+        return Response({"cart": serializer.data})
+    
+class ClearCart(APIView):
+    
+    def post(self, request):
+        
+        cart_service = CartService(request)
+        cart_service.clear_items()
+        
+        cart_data = cart_service.get_items()
+        
+        return Response({"cart": cart_data})
