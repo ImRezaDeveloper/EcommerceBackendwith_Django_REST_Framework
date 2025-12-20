@@ -5,18 +5,15 @@ class CartService:
         self.request = request
         self.user = request.user if request.user.is_authenticated else None
 
-        # تعیین کلید بر اساس کاربر لاگین‌شده یا جلسه مهمان
         if self.user:
             self.key = f"cart_user_{self.user}"
         else:
-            # برای کاربر مهمان: مطمئن شو session وجود داره
             if not request.session.session_key:
                 request.session.create()
             self.key = f"cart_session_{request.session.session_key}"
 
     def get_items(self):
         cart = cache.get(self.key, {})
-        # کلیدها رو به string تبدیل کن (ایمنی بیشتر)
         return {str(k): v for k, v in cart.items()}
 
     def add_item(self, product_id, quantity=1):
@@ -28,7 +25,7 @@ class CartService:
         else:
             cart[product_id] = {"quantity": quantity}
 
-        cache.set(self.key, cart, timeout=86400 * 30)  # ۳۰ روز
+        cache.set(self.key, cart, timeout=86400)
 
     def remove_item(self, product_id, quantity):
         cart = cache.get(self.key) or {}
