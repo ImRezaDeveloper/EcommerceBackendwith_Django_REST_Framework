@@ -13,12 +13,9 @@ class Order(models.Model):
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
     status = models.CharField(choices=STATUS_CHOICES, max_length=10, default="pending")
+    total_price = models.DecimalField(max_digits=12, decimal_places=0, default=0)    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
-    @property
-    def total_price(self):
-        return sum(item.price * item.quantity for item in self.items.all())
     
     def __str__(self):
         return f"Order #{self.id} - {self.user.phone}"
@@ -33,4 +30,4 @@ class OrderItems(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return f'{self.user.full_name}'
+        return f'{self.order.user.full_name}'

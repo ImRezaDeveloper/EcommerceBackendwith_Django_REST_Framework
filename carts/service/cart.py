@@ -3,7 +3,7 @@ from django.core.cache import cache
 class CartService:
     def __init__(self, request):
         self.request = request
-        self.user = request.user if request.user.is_authenticated else None
+        self.user = request.user
 
         if self.user:
             self.key = f"cart_user_{self.user}"
@@ -13,8 +13,7 @@ class CartService:
             self.key = f"cart_session_{request.session.session_key}"
 
     def get_items(self):
-        cart = cache.get(self.key, {})
-        return {str(k): v for k, v in cart.items()}
+        return cache.get(self.key, {})
 
     def add_item(self, product_id, quantity=1):
         product_id = str(product_id)
