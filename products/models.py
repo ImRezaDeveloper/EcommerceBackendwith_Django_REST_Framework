@@ -42,7 +42,7 @@ class ProductModel(models.Model):
     description = models.TextField(max_length=300, verbose_name='توضیحات', null=True, blank=True)
     slug = models.SlugField(verbose_name='اسلاگ')
     price = models.FloatField(verbose_name='قیمت', null=True, blank=True)
-    quantity = models.PositiveIntegerField(verbose_name='تعداد', default=2, null=True, blank=True)
+    stock = models.PositiveIntegerField(verbose_name='تعداد در انبار', default=2, null=True, blank=True)
     discount_percent = models.PositiveIntegerField(default=30, verbose_name='کد تخفیف', null=True, blank=True)
     in_stock = models.CharField(choices=in_stock_methods, verbose_name='موجود در انیار', null=True, blank=True)
     images = models.ManyToManyField(ImageModel, related_name='products', verbose_name='عکس ها')

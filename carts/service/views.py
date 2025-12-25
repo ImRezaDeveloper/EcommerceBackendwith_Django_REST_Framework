@@ -30,6 +30,10 @@ class AddToCart(APIView):
     def post(self, request):
         product_id = request.data.get("product_id")
         quantity = request.data.get('quantity', 1)
+        product = ProductModel.objects.get(id=product_id)
+        
+        if product.stock == 0:
+            return Response({"error": "quantity is not enough"}, status=400)
 
         if not product_id:
             return Response({"error": "product_id is required"}, status=400)

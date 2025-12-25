@@ -14,10 +14,10 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductModel
-        fields = ["id", "name", "price", "description", "quantity", "rating_count", "avg_rating", "discount_percent", "is_active"]
+        fields = ["id", "name", "price", "description", "stock", "rating_count", "avg_rating", "discount_percent", "is_active"]
 
 
 class CategoriesSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductModel
-        fields = ["id", "name", "slug", "price", "description", "quantity", "discount_percent", "is_active"]
+        fields = ["id", "name", "slug", "price", "description", "stock", "discount_percent", "is_active"]

@@ -10,7 +10,7 @@ class CheckoutService:
     def __init__(self, request):
         self.user = request.user
         self.cart = CartService(request)
-    
+        
     @transaction.atomic
     def checkout(self):
         cart_items = self.cart.get_items()
@@ -21,21 +21,25 @@ class CheckoutService:
         total_price = 0
         data = []
         
+        
         for product_id, item in cart_items.items():
             product = ProductModel.objects.get(id=product_id)
             quantity = item["quantity"]
             
             total_price += product.price * quantity
-            
+          
             data.append({
                 "product": product,
                 "quantity": quantity,
                 "price": product.price
             })
+            
+        product.stock = product.stock - quantity
+        product.save()
         
         order = Order.objects.create(
             user=self.user,
-            total_price=total_price  # حالا که فیلد اضافه کردی، کار می‌کنه
+            total_price=total_price
         )
         
         order_items = [
@@ -48,5 +52,4 @@ class CheckoutService:
             for item in data
         ]
         OrderItems.objects.bulk_create(order_items)
-        
-        return order  # فقط order رو برگردون
+        return order

@@ -18,7 +18,7 @@ class CartService:
     def add_item(self, product_id, quantity=1):
         product_id = str(product_id)
         cart = cache.get(self.key, {})
-
+        
         if product_id in cart:
             cart[product_id]["quantity"] += quantity
         else:
