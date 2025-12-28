@@ -2,10 +2,11 @@ from rest_framework.views import APIView
 from .cart import CartService
 from products.models import ProductModel
 from products.api.v1.serializer import ProductSerializer
-from rest_framework.response import Response
+from rest_framework import Response
+from rest_framework.permissions import IsAuthenticated
 
 class ItemsList(APIView):
-    
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         request.session.accessed = True
         if not request.session.session_key:
@@ -26,6 +27,7 @@ class ItemsList(APIView):
         return Response({"cart:": data})
     
 class AddToCart(APIView):
+    permission_classes = [IsAuthenticated]
     
     def post(self, request):
         product_id = request.data.get("product_id")
@@ -62,6 +64,7 @@ class AddToCart(APIView):
         return Response({"cart": data})
     
 class RemoveFromCart(APIView):
+    permission_classes = [IsAuthenticated]
     
     def post(self, request):
         product_id = request.data.get("product_id")
@@ -88,6 +91,7 @@ class RemoveFromCart(APIView):
         return Response({"cart": serializer.data})
     
 class ClearCart(APIView):
+    permission_classes = [IsAuthenticated]
     
     def post(self, request):
         
