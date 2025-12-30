@@ -33,7 +33,7 @@ class OrderItems(models.Model):
         return f'{self.order.user.full_name}'
 
 class OrderAddress(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='orders')
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='address')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='users', null=True, blank=True)
     province = models.CharField(max_length=30, null=True, blank=True)
     city = models.CharField(max_length=30, null=True, blank=True)
