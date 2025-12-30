@@ -7,7 +7,6 @@ from .serializer import UserRegisterSerializer, UserSerializer, ChangePasswordSe
 from rest_framework import generics, status
 from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken
-
 from ...permissions import IsOwner
 
 

@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from .cart import CartService
 from products.models import ProductModel
 from products.api.v1.serializer import ProductSerializer
-from rest_framework import Response
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 class ItemsList(APIView):
