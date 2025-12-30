@@ -31,3 +31,27 @@ class OrderItems(models.Model):
     
     def __str__(self):
         return f'{self.order.user.full_name}'
+
+class OrderAddress(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='orders')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='users', null=True, blank=True)
+    province = models.CharField(max_length=30, null=True, blank=True)
+    city = models.CharField(max_length=30, null=True, blank=True)
+    address = models.TextField()
+    phone_number = models.CharField(max_length=11, unique=True, db_index=True)
+    postal_code = models.CharField(max_length=10, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f'{self.phone_number}'
+    
+    def clean_data(self):
+        city = self.cleaned_data.get('city')
+        province = self.cleaned_data.get('province')
+        postal_code = self.cleaned_data.get('postal_code')
+        
+        for field_name, value in [('city', city), ('province', province), ('postal_code', postal_code)]:
+            if not value:
+                raise ValueError(f"Please fill the {field_name} field")
+        
+        return city, province, postal_code
