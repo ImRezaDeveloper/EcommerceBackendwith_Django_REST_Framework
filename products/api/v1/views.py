@@ -12,6 +12,12 @@ from rest_framework import filters
 from .pagination import ProductPagination
 from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 from .throttling import CustomAnonRateThrottle
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from config.utils import delete_cache
+from django.core.cache import caches
+from django.core.cache import cache
+
 
 
 class ProductsList(generics.ListAPIView):
@@ -31,18 +37,31 @@ class ProductsList(generics.ListAPIView):
     # throttling
     throttle_classes = [UserRateThrottle, CustomAnonRateThrottle]
     permission_classes = [IsAuthenticated]
+    # cache key prefix
+    CACHE_KEY_PREFIX = 'product_view'
+    CACHE_TIME_OUT = 300
 
     def get_queryset(self):
         return ProductModel.objects.annotate(
             avg_rating=Avg("comments__rating"),
             rating_count=Count("comments__rating")
         )
-
-    def get(self, request):
-        # products = ProductModel.objects.all()
-        ratings = self.get_queryset()
-        serializer = ProductSerializer(ratings, many=True)
-        return Response({"data": serializer.data})
+    
+    def get(self, request, *args, **kwargs):
+        cache_key = f"{self.CACHE_KEY_PREFIX}|{request.user.id}|{request.get_full_path()}"
+        
+        cached = cache.get(cache_key)
+        
+        if cached:
+            print("CACHE HIT")
+            return Response(cached)
+        
+        response = super().list(request, *args, **kwargs)
+        
+        cache.set(cache_key, response.data, self.CACHE_TIME_OUT)
+        
+        print("CACHE SET")
+        return response
 
 
 class ProductDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.ListAPIView):
@@ -50,6 +69,7 @@ class ProductDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.D
     queryset = ProductModel.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [IsAuthenticated]
+    CACHE_KEY_PREFIX = 'product_view'
 
     def get(self, request, *args, **kwargs):
         """
@@ -80,6 +100,7 @@ class ProductDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.D
                     - 400 Bad Request -> if data is invalid
                     - 404 Not Found   -> اif product does not exist
         """
+        delete_cache(self.CACHE_KEY_PREFIX)
         return super().update(request, *args, **kwargs)
 
     def delete(self, request, *args, **kwargs):
@@ -90,6 +111,7 @@ class ProductDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.D
                     - 204
                     - 404
         """
+        
         return super().destroy(request, *args, **kwargs)
 
     def get_queryset(self):

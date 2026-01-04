@@ -16,9 +16,8 @@ class CheckoutView(APIView):
     def post(self, request):
         try:
             service = CheckoutService(request)
-            order = service.checkout()  # حالا order واقعاً شیء Order هست
+            order = service.checkout()
             
-            # پاک کردن سبد خرید فقط بعد از commit موفق
             transaction.on_commit(lambda: service.cart.clear_items())
             
             return Response(
