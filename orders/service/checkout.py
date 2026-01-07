@@ -65,7 +65,6 @@ class CheckoutService:
                 price=item["price"],
             )
 
-        # 5️⃣ خالی کردن سبد
         self.cart.clear_items()
 
         return order

@@ -1,3 +1,4 @@
+import hashlib
 from django.db.models import Avg, Count
 from django.http import Http404
 from rest_framework.exceptions import JsonResponse, ValidationError
@@ -17,7 +18,9 @@ from django.views.decorators.cache import cache_page
 from config.utils import delete_cache
 from django.core.cache import caches
 from django.core.cache import cache
-
+from django.utils.http import quote_etag
+from products.selector.get_products import get_all_products, get_product_by_id
+from products.services.comment_product_service import CommentProductFilter
 
 
 class ProductsList(generics.ListAPIView):
@@ -25,7 +28,7 @@ class ProductsList(generics.ListAPIView):
         :return
             return all products
     """
-    queryset = ProductModel.objects.all()
+    queryset = get_all_products()
     serializer_class = ProductSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['in_stock']
@@ -40,7 +43,7 @@ class ProductsList(generics.ListAPIView):
     # cache key prefix
     CACHE_KEY_PREFIX = 'product_view'
     CACHE_TIME_OUT = 300
-
+    
     def get_queryset(self):
         return ProductModel.objects.annotate(
             avg_rating=Avg("comments__rating"),
@@ -48,29 +51,38 @@ class ProductsList(generics.ListAPIView):
         )
     
     def get(self, request, *args, **kwargs):
-        cache_key = f"{self.CACHE_KEY_PREFIX}|{request.user.id}|{request.get_full_path()}"
-        
+
+        cache_key = f"{self.CACHE_KEY_PREFIX}|{request.path}"
+
         cached = cache.get(cache_key)
+        
+        last_updated = self.queryset.order_by('-updated_at').first().updated_at.isoformat()
+        etag = quote_etag(hashlib.md5(last_updated.encode()).hexdigest())
+
+        if request.headers.get("If-None-Match") == etag:
+            return Response(status=304)
         
         if cached:
             print("CACHE HIT")
-            return Response(cached)
-        
-        response = super().list(request, *args, **kwargs)
-        
-        cache.set(cache_key, response.data, self.CACHE_TIME_OUT)
-        
+            return Response({"data": cached}, headers={"ETag": etag})
+
+        response = get_all_products()
+        serializer = ProductSerializer(response, many=True)
+        data = serializer.data
+
+        cache.set(cache_key, data, self.CACHE_TIME_OUT)
         print("CACHE SET")
-        return response
+
+        return Response(data, headers={"ETag": etag})
 
 
 class ProductDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.ListAPIView):
-
-    queryset = ProductModel.objects.all()
+    queryset = get_all_products()
     serializer_class = ProductSerializer
     permission_classes = [IsAuthenticated]
     CACHE_KEY_PREFIX = 'product_view'
-
+    CACHE_TIME_OUT = 300
+    
     def get(self, request, *args, **kwargs):
         """
             Get Product with pk
@@ -84,8 +96,20 @@ class ProductDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.D
 
 
         """
-        ratings = self.get_queryset()
-        serializer = ProductSerializer(ratings, many=True)
+        pk = kwargs["pk"]
+        cache_key = f"{self.CACHE_KEY_PREFIX}:{pk}"
+        
+        cached = cache.get(cache_key)
+        if cached:
+            print("CACHE HIT")
+            return Response(cached)
+        
+        product = self.get_object()
+        serializer = ProductSerializer(product)
+        data = serializer.data
+        cache.set(cache_key, data, self.CACHE_TIME_OUT)
+        
+        print("CACHE SET")
         return Response({"data": serializer.data})
 
     def put(self, request, *args, **kwargs):
@@ -134,9 +158,9 @@ class CommentProductList(generics.ListAPIView):
         400 Bad Request: Invalid product ID or request parameters.
     """
     def get_queryset(self):
-        product_id = self.kwargs.get('id')
-        return CommentProduct.objects.filter(product_id=product_id)
-
+        product_id = self.kwargs.get("id")
+        return CommentProductFilter.get_comments_for_product(product_id=product_id)
+    
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         if not queryset.exists():
@@ -163,7 +187,7 @@ class CommentCreateProducts(generics.ListCreateAPIView):
 
         def get_queryset(self):
             product_id = self.kwargs.get('id')
-            return CommentProduct.objects.filter(product_id=product_id)
+            return CommentProductFilter.get_comments_for_product(product_id=product_id)
 
         def perform_create(self, serializer):
             """

@@ -29,7 +29,6 @@ class CheckoutView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
         except Exception as e:
-            # برای دیباگ موقت
             print("Checkout error:", str(e))
             return Response(
                 {"error": "An error occurred during checkout", "detail": str(e)},
