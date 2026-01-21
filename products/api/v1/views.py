@@ -19,9 +19,9 @@ from config.utils import delete_cache
 from django.core.cache import caches
 from django.core.cache import cache
 from django.utils.http import quote_etag
-from products.selector.get_products import get_all_products, get_product_by_id
+from products.selector.get_products import get_all_products, get_product_by_id, get_all_comments
 from products.services.comment_product_service import CommentProductFilter
-
+from .permissions import IsOwnerForEdit
 
 class ProductsList(generics.ListAPIView):
     """
@@ -39,7 +39,7 @@ class ProductsList(generics.ListAPIView):
     pagination_class = ProductPagination
     # throttling
     throttle_classes = [UserRateThrottle, CustomAnonRateThrottle]
-    permission_classes = [IsAuthenticated]
+    # pagination_class = [IsAuthenticated]
     # cache key prefix
     CACHE_KEY_PREFIX = 'product_view'
     CACHE_TIME_OUT = 300
@@ -168,6 +168,19 @@ class CommentProductList(generics.ListAPIView):
         return super().list(request, *args, **kwargs)
 
     serializer_class = CommentProductSerializer
+    
+class CommentProductDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, generics.GenericAPIView):
+    queryset = get_all_comments
+    serializer_class = CommentProductSerializer
+    permission_classes = [IsOwnerForEdit]
+    
+    def get_queryset(self):
+        product_id = self.kwargs.get("pk")
+        return CommentProductFilter.get_comments_for_product(product_id=product_id)
+    
+    def put(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+    
 
 
 class CommentCreateProducts(generics.ListCreateAPIView):
