@@ -20,8 +20,11 @@ from django.core.cache import caches
 from django.core.cache import cache
 from django.utils.http import quote_etag
 from products.selector.get_products import get_all_products, get_product_by_id, get_all_comments
-from products.services.comment_product_service import CommentProductFilter
+from products.services.product import CommentProductFilter, ProductFilter
 from .permissions import IsOwnerForEdit
+from zoneinfo import ZoneInfo
+import jdatetime
+from datetime import datetime, timedelta
 
 class ProductsList(generics.ListAPIView):
     """
@@ -53,9 +56,8 @@ class ProductsList(generics.ListAPIView):
     def get(self, request, *args, **kwargs):
 
         cache_key = f"{self.CACHE_KEY_PREFIX}|{request.path}"
-
         cached = cache.get(cache_key)
-        
+    
         last_updated = self.queryset.order_by('-updated_at').first().updated_at.isoformat()
         etag = quote_etag(hashlib.md5(last_updated.encode()).hexdigest())
 
@@ -169,19 +171,29 @@ class CommentProductList(generics.ListAPIView):
 
     serializer_class = CommentProductSerializer
     
-class CommentProductDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, generics.GenericAPIView):
-    queryset = get_all_comments
+class CommentProductDetail(generics.RetrieveUpdateAPIView):
+    queryset = CommentProduct.objects.all()
     serializer_class = CommentProductSerializer
-    permission_classes = [IsOwnerForEdit]
-    
-    def get_queryset(self):
-        product_id = self.kwargs.get("pk")
-        return CommentProductFilter.get_comments_for_product(product_id=product_id)
-    
-    def put(self, request, *args, **kwargs):
-        return super().update(request, *args, **kwargs)
-    
 
+    def update(self, request, *args, **kwargs):
+        comment_pk = self.kwargs.get("comment_pk")
+        try:
+            comment = CommentProduct.objects.get(pk=comment_pk)
+        except CommentProduct.DoesNotExist:
+            return Response({"detail": "Comment not found"}, status=404)
+
+        now = datetime.now(ZoneInfo("Asia/Tehran"))
+
+        created_at_local = comment.created_at.astimezone(ZoneInfo("Asia/Tehran"))
+
+        if now - created_at_local > timedelta(minutes=1):
+            return Response(
+                {"detail": "You can't edit your comment after 1 minute."},
+                status=400
+            )
+
+        return super().update(request, *args, **kwargs)
+        
 
 class CommentCreateProducts(generics.ListCreateAPIView):
         """
@@ -201,6 +213,13 @@ class CommentCreateProducts(generics.ListCreateAPIView):
         def get_queryset(self):
             product_id = self.kwargs.get('id')
             return CommentProductFilter.get_comments_for_product(product_id=product_id)
+        
+        def print_services(self):
+            product_id = self.kwargs.get('id')
+            user = self.request.user
+            
+            ProductFilter.get_product_for_check_buy(user_id=user, product_id=product_id)
+            ProductFilter.get_product_for_check_user_comment(user_id=user, product_id=product_id)
 
         def perform_create(self, serializer):
             """
@@ -213,12 +232,10 @@ class CommentCreateProducts(generics.ListCreateAPIView):
             """
             product_id = self.kwargs.get('id')
             user = self.request.user
-
-            if CommentProduct.objects.filter(user=user, product_id=product_id).exists():
-                raise ValidationError({"detail": "you've already leaved comment for this product"})
+            
+            self.print_services()
 
             serializer.save(user=user, product_id=product_id)
-
 
 class CategoriesList(generics.ListAPIView):
     """

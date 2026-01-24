@@ -1,1 +1,1 @@
-from products.services.comment_product_service import *
+from products.services.product import *
