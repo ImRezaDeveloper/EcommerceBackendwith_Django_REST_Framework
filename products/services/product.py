@@ -6,7 +6,7 @@ class CommentProductFilter():
     
      @staticmethod
      def get_comments_for_product(product_id: int):
-        return CommentProduct.objects.filter(product_id=product_id)
+        return CommentProduct.objects.filter(product_id=product_id, is_deleted=False)
      
 class ProductFilter():
    

@@ -1,3 +1,4 @@
+from datetime import timezone
 from django.db import models
 from accounts.models import User
 from django.template.defaultfilters import slugify
@@ -51,7 +52,9 @@ class ProductModel(models.Model):
     is_active = models.BooleanField(default=False, verbose_name='فعال؟')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    
     def __str__(self):
         return self.name
 
@@ -61,7 +64,12 @@ class ProductModel(models.Model):
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
-        super().save(*args, **kwargs)  # بدون این مدل هرگز ذخیره نمی‌شود
+        super().save(*args, **kwargs)
+    
+    def soft_delete(self):
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save()
 
 
 class CommentProduct(models.Model):
@@ -72,10 +80,17 @@ class CommentProduct(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)  # برای مدیریت و مخفی کردن نظر
-
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    
     def __str__(self):
         return f"{self.user} ({self.rating}/5)"
 
+    def soft_delete(self):
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save()
+        
     class Meta:
         verbose_name = 'کامنت'
         verbose_name_plural = 'کامنت ها'
