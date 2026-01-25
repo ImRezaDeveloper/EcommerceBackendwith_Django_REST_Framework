@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'carts',
     'rest_framework',
     'django_filters',
-    'rest_framework_simplejwt.token_blacklist'
+    'rest_framework_simplejwt.token_blacklist',
+    'django_celery_beat'
 ]
 
 MIDDLEWARE = [
@@ -158,3 +159,7 @@ CACHES = {
         }
     }
 }
+
+CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
