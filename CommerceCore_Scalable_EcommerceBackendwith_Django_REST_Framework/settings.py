@@ -24,7 +24,7 @@ SECRET_KEY = 'django-insecure-pu3*sx75sn&4(h5(k2@l&zt2g3&hr_17@u)e^xi^5qdxpyqt!2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "testserver"]
 
 # Application definition
 
@@ -160,6 +160,16 @@ CACHES = {
     }
 }
 
+# celery configurations
 CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
+
+# email configurations
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# EMAIL_HOST = "sandbox.smtp.mailtrap.io"
+# EMAIL_HOST_USER = "69a2f6a07e84ca"
+# EMAIL_HOST_PASSWORD = "75266642d198e0"
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# DEFAULT_FROM_EMAIL = "noreply@example.com"

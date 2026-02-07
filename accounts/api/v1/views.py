@@ -8,25 +8,34 @@ from rest_framework import generics, status
 from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken
 from ...permissions import IsOwner
-
-
+from accounts.tasks import send_test_email
+import random
+from django.core.cache import cache
 class UserRegisterView(APIView):
     """
         Register user with phone number
         Responses:
                 201 OK: Successfully created the user.
-                400 Bad Request: Invalid User or request parameters.
+                400 
+                
+                
+                
+                Bad Request: Invalid User or request parameters.
     """
     def post(self, request):
         serializer = UserRegisterSerializer(data=request.data)
 
         if serializer.is_valid():
             serializer.save()
+            print("this is otp code: ", otp_code)
+            # print("Data from serializer:", serializer.data)
+            # send_test_email.delay(serializer.data['email'], serializer.data['full_name'])
             return Response(
                 {
                     "message": "User Registred Successfully"
                 }, status=201
             )
+            
         return Response(serializer.errors, status=400)
 
 
@@ -35,7 +44,7 @@ class ListUserInfo(generics.ListCreateAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
     throttle_classes = [UserRateThrottle, AnonRateThrottle]
-
+    
 
 class UserInfoById(generics.RetrieveAPIView, generics.UpdateAPIView, generics.DestroyAPIView):
     queryset = User.objects.all()
@@ -43,6 +52,8 @@ class UserInfoById(generics.RetrieveAPIView, generics.UpdateAPIView, generics.De
     permission_classes = [IsAuthenticated, IsOwner]
 
     def get(self, request, *args, **kwargs):
+        otp_code = cache.set("otp_", random.randint(100000, 999999))
+        print(cache.get("otp_code"))
         return super().retrieve(request, *args, **kwargs)
 
     def put(self, request,*args, **kwargs):
@@ -107,3 +118,9 @@ class UserProfile(APIView):
         user = self.request.user
         serializer = UserSerializer(user)
         return Response(serializer.data)
+    
+# class VerifyOtp(APIView):
+#     permission_classes = [IsAuthenticated]
+    
+#     def post(self, request):
+#         # otp_code = 

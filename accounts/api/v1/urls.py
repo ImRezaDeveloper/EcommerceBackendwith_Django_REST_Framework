@@ -4,19 +4,20 @@ from . import views
 
 urlpatterns = [
     # login via jwt
-    path('api/v1/accounts/login', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/v1/accounts/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('login', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # logout
-    path('api/v1/accounts/logout', views.LogoutView.as_view(), name='logout'),
+    path('logout/', views.LogoutView.as_view(), name='logout'),
 
     # register => after register get jwt code
-    path('api/v1/accounts/register', views.UserRegisterView.as_view(), name='register'),
+    path('register/', views.UserRegisterView.as_view(), name='register'),
+    # path("verify-otp/", views.VerifyOtp.as_view(), name="verify-otp"),
 
     # user info
-    path('api/v1/users/', views.ListUserInfo.as_view(), name='users_info'),
-    path('api/v1/users/<str:pk>/', views.UserInfoById.as_view(), name='user_by_id'),
-    path('api/v1/users/me', views.UserProfile.as_view(), name="user_profile"),
+    path('users/', views.ListUserInfo.as_view(), name='users_info'),
+    path('users/<str:pk>/', views.UserInfoById.as_view(), name='user_by_id'),
+    path('users/me', views.UserProfile.as_view(), name="user_profile"),
     
     # password
     path("change_password/<int:id>", views.ChangePassword.as_view(), name="change_password")
