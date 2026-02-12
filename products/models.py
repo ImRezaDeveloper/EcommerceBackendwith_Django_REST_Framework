@@ -94,3 +94,23 @@ class CommentProduct(models.Model):
     class Meta:
         verbose_name = 'کامنت'
         verbose_name_plural = 'کامنت ها'
+    
+class WishListProduct(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="wish_list")
+    product = models.ForeignKey(ProductModel, on_delete=models.CASCADE, related_name="wish_list")
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.product.name}"
+    
+    def soft_delete(self):
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save()
+        
+    class Meta:
+        verbose_name = 'علاقه مندی'
+        verbose_name_plural = 'علاقه مندی ها'
+    

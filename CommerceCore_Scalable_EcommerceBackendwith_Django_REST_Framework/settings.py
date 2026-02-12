@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -173,3 +174,5 @@ CELERY_TASK_SERIALIZER = "json"
 # EMAIL_PORT = 587
 # EMAIL_USE_TLS = True
 # DEFAULT_FROM_EMAIL = "noreply@example.com"
+
+PHONE_SECRET_KEY = os.getenv("PHONE_SECRET_KEY", "default-very-insecure-key-change-me")

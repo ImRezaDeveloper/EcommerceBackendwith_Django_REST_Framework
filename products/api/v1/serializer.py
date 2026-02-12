@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from products.models import ProductModel, CommentProduct
+from products.models import ProductModel, CommentProduct, WishListProduct
 
 
 class CommentProductSerializer(serializers.ModelSerializer):
@@ -21,3 +21,9 @@ class CategoriesSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductModel
         fields = ["id", "name", "slug", "price", "description", "stock", "discount_percent", "is_active"]
+
+class WishListProductsSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = WishListProduct
+        fields = ["user", "product"]

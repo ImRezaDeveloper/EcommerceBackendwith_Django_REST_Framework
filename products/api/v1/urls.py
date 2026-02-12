@@ -13,5 +13,8 @@ urlpatterns = [
     
 
     # categories
-    path('categories/<str:category>/products/', views.CategoriesList.as_view())
+    path('categories/<str:category>/products/', views.CategoriesList.as_view()),
+    
+    # favorites
+    path("profile/myfavorits", views.WishListProductsView.as_view(), name="wish_list")
 ]
