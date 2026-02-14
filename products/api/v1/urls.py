@@ -16,5 +16,7 @@ urlpatterns = [
     path('categories/<str:category>/products/', views.CategoriesList.as_view()),
     
     # favorites
-    path("profile/myfavorits", views.WishListProductsView.as_view(), name="wish_list")
+    path("profile/myfavorits", views.WishListProductsView.as_view(), name="wish_list"),
+    path("favorites/", views.WishListProductsCreateView.as_view(), name="add_wish_list"),
+    # 
 ]

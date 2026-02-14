@@ -4,7 +4,7 @@ from django.http import Http404
 from rest_framework.exceptions import JsonResponse, ValidationError
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from accounts.models import User
-from products.api.v1.serializer import ProductSerializer, CommentProductSerializer, CategoriesSerializer, WishListProductsSerializer
+from products.api.v1.serializer import ProductSerializer, CommentProductSerializer, CategoriesSerializer, WishListCreateProductSerializer, WishListProductsSerializer
 from products.models import ProductModel, CommentProduct, CategoryModel, WishListProduct
 from rest_framework.response import Response
 from rest_framework import generics, mixins
@@ -258,26 +258,38 @@ class CategoriesList(generics.ListAPIView):
     serializer_class = CategoriesSerializer
 
 
-class WishListProductsView(generics.ListCreateAPIView):
+class WishListProductsView(generics.ListAPIView):
     
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        product_id = self.kwargs.get("product_id")
-        wishlists = WishListProduct.objects.filter(user=self.request.user, product=product_id, is_deleted=False)
+        wishlists = WishListProduct.objects.filter(user=self.request.user, is_deleted=False)
         return wishlists
     
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        if queryset.exists():
-            return Response({"detail": "this product is already added to your favorite product"}, status=200)
+        if not queryset:
+            return Response({"detail": "your favorite list is empty."})
+        # if queryset.exists():
+        #     return Response({"detail": "this product is already added to your favorite product"}, status=200)
         return super().list(request, *args, **kwargs)
-    
-    def post(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        if queryset.exists():
-                return Response({"detail": "you already added this product to your favorite list"})
-        return super().post(request, *args, **kwargs)
     
     
     serializer_class = WishListProductsSerializer
+    
+class WishListProductsCreateView(generics.CreateAPIView):
+    
+    permission_classes = [IsAuthenticated]
+    serializer_class = WishListCreateProductSerializer
+    
+    def perform_create(self, serializer):
+        product_id = serializer.validated_data['product']
+        
+        if WishListProduct.objects.filter(
+            user=self.request.user,
+            product_id=product_id,
+            is_deleted=False
+        ).exists():
+            raise ValidationError("This product is already in your wishlist.")
+        
+        serializer.save(user=self.request.user)

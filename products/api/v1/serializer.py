@@ -27,3 +27,9 @@ class WishListProductsSerializer(serializers.ModelSerializer):
     class Meta:
         model = WishListProduct
         fields = ["user", "product"]
+        
+class WishListCreateProductSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = WishListProduct
+        fields = ['product',]
